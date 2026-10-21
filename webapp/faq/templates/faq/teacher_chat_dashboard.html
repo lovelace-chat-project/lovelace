@@ -1,0 +1,325 @@
+{% load i18n %}
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Teacher Chat Dashboard</title>
+    <style>
+        /* ========================================================= */
+        /* RESPONSIVE SPLIT-PANE TEACHER DASHBOARD STYLES            */
+        /* ========================================================= */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            margin: 0;
+            padding: 12px;
+            background-color: #f5f6f8;
+            color: #333;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* Container that scales fluidly in full-screen or windowed mode */
+        .chat-app-container {
+            display: flex;
+            height: calc(100vh - 24px);
+            width: 100%;
+            background: #ffffff;
+            border-radius: 8px;
+            border: 1px solid #e1e4e8;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.05);
+            overflow: hidden;
+        }
+
+        /* 1. LEFT SIDEBAR: THREAD QUEUE */
+        .threads-sidebar {
+            width: 300px;
+            min-width: 200px;
+            max-width: 320px;
+            flex-shrink: 0;
+            border-right: 1px solid #e1e4e8;
+            display: flex;
+            flex-direction: column;
+            background-color: #fafbfc;
+        }
+
+        .threads-header {
+            padding: 16px;
+            border-bottom: 1px solid #e1e4e8;
+            font-size: 1.1em;
+            font-weight: bold;
+            display: flex;
+            align-items: center;
+        }
+
+        .threads-list {
+            flex-grow: 1;
+            overflow-y: auto;
+        }
+
+        .thread-item {
+            display: flex;
+            padding: 12px 14px;
+            border-bottom: 1px solid #f0f0f0;
+            cursor: pointer;
+            transition: background 0.2s ease;
+        }
+
+        .thread-item:hover, .thread-item.active {
+            background-color: #edf2f7;
+        }
+
+        .thread-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            background-color: #e2e8f0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+
+        .thread-details {
+            overflow: hidden;
+            width: 100%;
+        }
+
+        /* GREEN: Course / Exercise Name */
+        .text-course-name {
+            color: #2e7d32;
+            font-weight: bold;
+            font-size: 0.9em;
+            margin: 0 0 2px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* RED: Actual Student Username (Visible only to teachers) */
+        .text-student-id {
+            color: #d32f2f;
+            font-weight: 600;
+            font-size: 0.85em;
+            margin: 0 0 4px 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* YELLOW/MUTED: Message Preview */
+        .text-message-preview {
+            color: #d97706;
+            font-size: 0.82em;
+            margin: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        /* 2. RIGHT MAIN PANEL: CONVERSATION VIEW */
+        .conversation-panel {
+            flex: 1;
+            min-width: 0; /* Prevents overflow when window is resized small */
+            display: flex;
+            flex-direction: column;
+            background: #ffffff;
+        }
+
+        .conversation-header {
+            padding: 16px;
+            border-bottom: 1px solid #e1e4e8;
+            background-color: #ffffff;
+        }
+
+        .messages-feed {
+            flex-grow: 1;
+            overflow-y: auto;
+            padding: 16px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            background-color: #fdfdfd;
+        }
+
+        .date-divider {
+            text-align: center;
+            border-bottom: 1px solid #eaeaea;
+            line-height: 0.1em;
+            margin: 15px 0;
+            color: #888;
+            font-size: 0.8em;
+        }
+
+        .date-divider span {
+            background: #fdfdfd;
+            padding: 0 10px;
+        }
+
+        .message-row {
+            display: flex;
+            align-items: flex-start;
+        }
+
+        .message-body {
+            margin-left: 10px;
+            max-width: 85%;
+            min-width: 0;
+        }
+
+        .message-meta {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 4px;
+        }
+
+        .message-timestamp {
+            font-size: 0.75em;
+            color: #888;
+        }
+
+        /* YELLOW: Conversation / Message Bubble */
+        .message-bubble {
+            background-color: #fef3c7;
+            border: 1px solid #fde68a;
+            color: #78350f;
+            padding: 10px 14px;
+            border-radius: 8px;
+            font-size: 0.95em;
+            line-height: 1.4;
+            word-wrap: break-word;
+        }
+
+        /* 3. BOTTOM INPUT AREA */
+        .chat-input-container {
+            padding: 12px 16px;
+            border-top: 1px solid #e1e4e8;
+            display: flex;
+            gap: 10px;
+            background: #ffffff;
+        }
+
+        .chat-input-container input {
+            flex-grow: 1;
+            min-width: 0;
+            padding: 10px 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 0.95em;
+        }
+
+        .chat-input-container button {
+            padding: 10px 18px;
+            background-color: #2e7d32;
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            flex-shrink: 0;
+        }
+
+        /* 4. RESPONSIVE MEDIA QUERIES FOR NARROW WINDOWS */
+        @media (max-width: 600px) {
+            .threads-sidebar {
+                width: 180px;
+                min-width: 140px;
+            }
+            body {
+                padding: 4px;
+            }
+            .chat-app-container {
+                height: calc(100vh - 8px);
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="chat-app-container">
+        
+        <!-- LEFT PANEL: THREAD QUEUE -->
+        <div class="threads-sidebar">
+            <div class="threads-header">
+                <span>Chats</span>
+            </div>
+            
+            <div class="threads-list">
+                <!-- Thread Item 1 -->
+                <div class="thread-item active">
+                    <div class="thread-avatar">💬</div>
+                    <div class="thread-details">
+                        <!-- GREEN: Course / Exercise Name -->
+                        <p class="text-course-name">Basic Task Page</p>
+                        <!-- RED: Real Student Username (Teachers see true identity) -->
+                        <p class="text-student-id">student1</p>
+                        <!-- YELLOW: Message Preview -->
+                        <p class="text-message-preview">Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.</p>
+                    </div>
+                </div>
+
+                <!-- Thread Item 2 -->
+                <div class="thread-item">
+                    <div class="thread-avatar">💬</div>
+                    <div class="thread-details">
+                        <!-- GREEN: Course / Exercise Name -->
+                        <p class="text-course-name">Exam Test Page</p>
+                        <!-- RED: Real Student Username -->
+                        <p class="text-student-id">student2</p>
+                        <!-- YELLOW: Message Preview -->
+                        <p class="text-message-preview">Can you give a hint for question 2?</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT PANEL: CONVERSATION VIEW -->
+        <div class="conversation-panel">
+            
+            <!-- GREEN: Header displaying selected Exercise -->
+            <div class="conversation-header">
+                <h3 class="text-course-name" style="font-size: 1.1em; margin: 0;">Basic Task Page</h3>
+            </div>
+
+            <!-- Message Stream -->
+            <div class="messages-feed">
+                
+                <div class="date-divider"><span>Today</span></div>
+
+                <!-- Message Entry -->
+                <div class="message-row">
+                    <div class="thread-avatar">👤</div>
+                    <div class="message-body">
+                        <div class="message-meta">
+                            <!-- RED: Real Student Username -->
+                            <span class="text-student-id">student1</span>
+                            <span class="message-timestamp">8:53 PM</span>
+                        </div>
+                        <!-- YELLOW: Message Content -->
+                        <div class="message-bubble">
+                            Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <!-- Teacher Reply Box -->
+            <div class="chat-input-container">
+                <input type="text" placeholder="Type your response...">
+                <button type="button">Send</button>
+            </div>
+
+        </div>
+
+    </div>
+
+</body>
+</html>
