@@ -8,6 +8,9 @@ from django.http import (
     JsonResponse,
 )
 from django.utils.translation import gettext as _
+from django.shortcuts import render  # ADD THIS for the dashboard template
+from .chat_function import generate_random_student_id, handle_incoming_message  # ADD THIS for finction chat
+
 from faq.models import FaqQuestion, FaqToInstanceLink
 from faq.forms import FaqQuestionForm
 from faq.utils import regenerate_content_cache, render_panel
@@ -102,3 +105,18 @@ def unlink_question(request, course, instance, exercise, hook):
 
     regenerate_content_cache(instance, exercise)
     return HttpResponse(status=204)
+
+# =====================================================================
+# TEACHER CHAT DASHBOARD VIEW
+# =====================================================================
+@ensure_staff
+def teacher_chat_dashboard(request, course, instance):
+    """
+    Renders the central teacher dashboard. 
+    Restricted to staff members only using the local @ensure_staff decorator.
+    """
+    context = {
+        'course': course,
+        'instance': instance,
+    }
+    return render(request, 'faq/teacher_chat_dashboard.html', context)

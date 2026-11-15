@@ -7,6 +7,7 @@ def get_base_static_includes(context):
     return [
         ("style", "faq/faq.css"),
         ("script", "faq/faq.js"),
+        ("script", "faq/chat.js"),
     ]
 
 

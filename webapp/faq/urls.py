@@ -30,4 +30,14 @@ urlpatterns = [
         views.unlink_question,
         name="unlink_question",
     ),
+
+    # =====================================================================
+    # TEACHER CHAT DASHBOARD ROUTE
+    # Purpose: route for teachers to access the chat.
+    # =====================================================================
+    path(
+        "<course:course>/<instance:instance>/teacher/chats/",
+        views.teacher_chat_dashboard,
+        name="teacher_chat_dashboard",
+    ),
 ]
